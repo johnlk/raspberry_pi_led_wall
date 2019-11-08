@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Raspberry Pi LED Wall</title>
+  <style>
+    body { font-family: verdana, sans-serif; }
+    #selectorContainer, #buttonContainer { display: inline; padding: 5px; }
+    #messageContainer textarea { width: 300px; height: 150px; font-size: 21px; font-family: verdana, sans-serif; padding: 10px; } 
+    #messageContainer { margin-bottom: 10px; }
+    #button { font-size: 14px; font-family: verdana, sans-serif; }
+  </style>
+</head>
+<body>
+  <span>Select a text color:</span>
+  <div id="selectorContainer">
+    <input type="color" id="text_color" name="text_color" value="#0066ff">
+  </div>
+  <br>
+  <p>Write your message: (140 chars max)</p>
+  <div id="messageContainer">
+    <textarea id="message" maxlength="140" placeholder="john you're so cool"></textarea>
+  </div>
+  <span>Post message:</span>
+  <div id="buttonContainer">
+    <button id="button">Let's do it</button>
+  </div>
+  <script>
+    var color = document.getElementById('text_color');
+    var message = document.getElementById('message');
+    var button = document.getElementById('button');
+
+    button.addEventListener('click', function(){
+      var selectedColor = color.value;
+      var text = message.value;
+      //TODO blast over the socket 
+    });
+  </script>
+</body>
+</html>
