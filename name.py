@@ -1,7 +1,8 @@
 import time
 import board
 import neopixel
- 
+from char_mappings import get_mapping 
+
 pixel_pin = board.D18
  
 num_pixels = 60 * 5
@@ -11,24 +12,26 @@ ORDER = neopixel.GRB
 pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.05, auto_write=False,
                            pixel_order=ORDER)
 
-color = (255, 0, 0)
-words = [
-'0000000000000000000000001111111001111100000110001100011000110',
-'0000000000000000000000000001100001100011000110001100011100110',
-'0000000000000000000000000001100001100011000111111100011110110',
-'0000000000000000000000000001100001100011000110001100011011110',
-'0000000000000000000000001111100000111110000110001100011000110'
+screen = [
+'0000000000000000000000000000000000000000000000000000000000000',
+'0000000000000000000000000000000000000000000000000000000000000',
+'0000000000000000000000000000000000000000000000000000000000000',
+'0000000000000000000000000000000000000000000000000000000000000',
+'0000000000000000000000000000000000000000000000000000000000000'
 ]
 
 def shiftLeft(numTimes):
-	global words
-	words = [
-		words[0][numTimes:] + words[0][:numTimes],
-		words[1][numTimes:] + words[1][:numTimes],
-		words[2][numTimes:] + words[2][:numTimes],
-		words[3][numTimes:] + words[3][:numTimes],
-		words[4][numTimes:] + words[4][:numTimes]
+	global screen
+	screen = [
+		screen[0][numTimes:] + screen[0][:numTimes],
+		screen[1][numTimes:] + screen[1][:numTimes],
+		screen[2][numTimes:] + screen[2][:numTimes],
+		screen[3][numTimes:] + screen[3][:numTimes],
+		screen[4][numTimes:] + screen[4][:numTimes]
 	]
+
+
+color = (255, 0, 0)
 
 def clear():
 	pixels.fill((0,0,0))
@@ -36,7 +39,7 @@ def clear():
 def fillRow(rowIndex):
 	startingIndex = 60 * rowIndex
 
-	rowString = words[rowIndex]
+	rowString = screen[rowIndex][:60]
 
 	if rowIndex % 2 == 0:
 		rowString = rowString[::-1] #reverse it
@@ -57,9 +60,29 @@ def fillScreen():
 	fillRow(4)
 	pixels.show() 
 
+def add_message(message):
+  global screen
+  message_mapping = get_mapping(message)
+  screen = [
+		screen[0] + message_mapping[0],
+		screen[1] + message_mapping[1],
+		screen[2] + message_mapping[2],
+		screen[3] + message_mapping[3],
+		screen[4] + message_mapping[4]
+	]
+
+clear()
+pixels.show()
+pixels.fill((234, 105, 5))
+pixels.show()
+time.sleep(2)
+
+add_message('we can handle this like reasonable sexy teenagers')
+
 while True:
-	color = (0, 0, 255)
+	color = (195, 6, 49)
 	shiftLeft(1)
 	fillScreen()
-	time.sleep(0.1)
- 
+	time.sleep(0.01)
+
+
