@@ -38,11 +38,11 @@ def add_message(message):
 		screen[4] + message_mapping[4]
 	]
 
-add_message('john is awesome')
+add_message('women wear the worse wooley whiskers.')
 
 while True:
 	color = (0, 0, 255)
 	shiftLeft(1)
 	fillScreen()
-	time.sleep(0.1)
+	time.sleep(0.08)
  
