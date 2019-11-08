@@ -3,14 +3,25 @@ import board
 import neopixel
 from char_mappings import get_mapping 
 
+from pubnub.enums import PNStatusCategory
+from pubnub.pnconfiguration import PNConfiguration
+from pubnub.pubnub import PubNub, SubscribeListener
+
+
 pixel_pin = board.D18
- 
 num_pixels = 60 * 5
- 
 ORDER = neopixel.GRB
- 
-pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.05, auto_write=False,
-                           pixel_order=ORDER)
+pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.05, auto_write=False, pixel_order=ORDER)
+
+pnconfig = PNConfiguration()
+pnconfig.subscribe_key = 'sub-c-41e1caba-e89a-11e6-81cc-0619f8945a4f'
+pubnub = PubNub(pnconfig)
+
+my_listener = SubscribeListener()
+pubnub.add_listener(my_listener)
+
+pubnub.subscribe().channels('ledWall').execute()
+my_listener.wait_for_connect()
 
 screen = [
 '0000000000000000000000000000000000000000000000000000000000000',
@@ -77,12 +88,16 @@ pixels.fill((234, 105, 5))
 pixels.show()
 time.sleep(2)
 
-add_message('we can handle this like reasonable sexy teenagers')
+#add_message('we can handle this like reasonable sexy teenagers')
 
 while True:
+  result = my_listener.wait_for_message_on('ledWall')
+  print(result.message)
+  """
 	color = (195, 6, 49)
 	shiftLeft(1)
 	fillScreen()
 	time.sleep(0.01)
+  """
 
 
