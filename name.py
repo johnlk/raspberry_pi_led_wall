@@ -24,13 +24,17 @@ pubnub.add_listener(my_listener)
 pubnub.subscribe().channels('ledWall').execute()
 my_listener.wait_for_connect()
 
-screen = [
-'0000000000000000000000000000000000000000000000000000000000000',
-'0000000000000000000000000000000000000000000000000000000000000',
-'0000000000000000000000000000000000000000000000000000000000000',
-'0000000000000000000000000000000000000000000000000000000000000',
-'0000000000000000000000000000000000000000000000000000000000000'
-]
+screen = []
+
+def reset_screen():
+	global screen
+	screen = [
+		'0000000000000000000000000000000000000000000000000000000000000',
+		'0000000000000000000000000000000000000000000000000000000000000',
+		'0000000000000000000000000000000000000000000000000000000000000',
+		'0000000000000000000000000000000000000000000000000000000000000',
+		'0000000000000000000000000000000000000000000000000000000000000'
+	]
 
 def shiftLeft(numTimes):
 	global screen
@@ -41,9 +45,6 @@ def shiftLeft(numTimes):
 		screen[3][numTimes:] + screen[3][:numTimes],
 		screen[4][numTimes:] + screen[4][:numTimes]
 	]
-
-
-color = (255, 0, 0)
 
 def clear():
 	pixels.fill((0,0,0))
@@ -84,30 +85,26 @@ def add_message(message):
 	]
 
 def get_time():
-  return datetime.now().strftime('%a-%d   %I:%M %p')
+  return datetime.now().strftime('%a-%d %I:%M %p')
 
 def kelvin_to_far(float_val):
   celcius = float_val - 273.15
   return str(int(celcius * (9/5) + 32))
 
 def get_weather():
-  #response = requests.get("api.openweathermap.org/data/2.5/weather?zip=47905,us&" +
-  #  "appid=5c48857cbe6c1763f27742ae12bd805f")
-  response = requests.get("https://samples.openweathermap.org/data/2.5/weather?zip=94040,us&appid=b6907d289e10d714a6e88b30761fae22")
+  response = requests.get("api.openweathermap.org/data/2.5/weather?zip=47905,us&" +
+    "appid=5c48857cbe6c1763f27742ae12bd805f")
+  #response = requests.get("https://samples.openweathermap.org/data/2.5/weather?zip=94040,us&appid=b6907d289e10d714a6e88b30761fae22")
   if response.status_code != 200:
     return "404 weather"
 
   response = response.json()
   #print(response)
 
-  weather = kelvin_to_far(response['main']['temp']) + " degrees, " + response['weather'][0]['description']
+  weather = kelvin_to_far(response['main']['temp']) + "' , " + response['weather'][0]['description']
   return weather
 
-
-clear()
-pixels.show()
-
-while True:
+def wait_for_message():
 	result = my_listener.wait_for_message_on('ledWall')
 	#print(result.message)
 
@@ -127,14 +124,24 @@ while True:
 		fillScreen()
 		time.sleep(0.01)
 
-	screen = [
-		'0000000000000000000000000000000000000000000000000000000000000',
-		'0000000000000000000000000000000000000000000000000000000000000',
-		'0000000000000000000000000000000000000000000000000000000000000',
-		'0000000000000000000000000000000000000000000000000000000000000',
-		'0000000000000000000000000000000000000000000000000000000000000'
-	]
+	reset_screen()
 
+def update_clock():
+	reset_screen()
+	add_message(get_time())
+	shiftLeft(61)
+	fillScreen()
+	time.sleep(60)
 
+reset_screen()
+clear()
+pixels.show()
+
+color = (0, 0, 250)
+
+while True:
+	#wait_for_messages()
+	#add_message(get_weather())
+	update_clock()
 
 
