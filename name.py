@@ -7,7 +7,6 @@ from pubnub.enums import PNStatusCategory
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub, SubscribeListener
 
-
 pixel_pin = board.D18
 num_pixels = 60 * 5
 ORDER = neopixel.GRB
@@ -84,20 +83,36 @@ def add_message(message):
 
 clear()
 pixels.show()
-pixels.fill((234, 105, 5))
-pixels.show()
-time.sleep(2)
 
-#add_message('we can handle this like reasonable sexy teenagers')
 
 while True:
-  result = my_listener.wait_for_message_on('ledWall')
-  print(result.message)
-  """
-	color = (195, 6, 49)
-	shiftLeft(1)
-	fillScreen()
-	time.sleep(0.01)
-  """
+	result = my_listener.wait_for_message_on('ledWall')
+	#print(result.message)
+
+	clear()
+	pixels.show()
+	pixels.fill((234, 105, 5))
+	pixels.show()
+	time.sleep(2)
+
+	add_message(result.message['text'])
+
+	passed_color = result.message['color']
+	color = (passed_color['r'], passed_color['g'], passed_color['b'])
+
+	for _ in range(len(screen[0])):	
+		shiftLeft(1)
+		fillScreen()
+		time.sleep(0.01)
+
+	screen = [
+		'0000000000000000000000000000000000000000000000000000000000000',
+		'0000000000000000000000000000000000000000000000000000000000000',
+		'0000000000000000000000000000000000000000000000000000000000000',
+		'0000000000000000000000000000000000000000000000000000000000000',
+		'0000000000000000000000000000000000000000000000000000000000000'
+	]
+
+
 
 
