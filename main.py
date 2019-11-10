@@ -52,6 +52,7 @@ def clear():
 	pixels.fill((0,0,0))
 
 def fillRow(rowIndex):
+	global color
 	startingIndex = 60 * rowIndex
 
 	rowString = screen[rowIndex][:60]
@@ -140,35 +141,34 @@ class get_weather(threading.Thread):
       except Exception as err:
         print("404 weather")
 
-      time.sleep(60)
+      time.sleep(60 * 3) #3 mins
 
-def wait_for_message():
-	result = my_listener.wait_for_message_on('ledWall')
+class get_messages(threading.Thread):
+  def __init__(self):
+    threading.Thread.__init__(self)
+  def run(self):
+    global color
+    while True:
+      result = my_listener.wait_for_message_on('ledWall')
+      screenLock.acquire()
 
-	clear()
-	pixels.show()
-	pixels.fill((234, 105, 5))
-	pixels.show()
-	time.sleep(2)
+      reset_screen()
+      clear()
+      pixels.fill((234, 105, 5))
+      pixels.show()
+      time.sleep(2)
 
-	add_message(result.message['text'])
+      add_message(result.message['text'])
 
-	passed_color = result.message['color']
-	color = (passed_color['r'], passed_color['g'], passed_color['b'])
+      passed_color = result.message['color']
+      color = (passed_color['r'], passed_color['g'], passed_color['b'])
 
-	for _ in range(len(screen[0])):	
-		shiftLeft(1)
-		fillScreen()
-		time.sleep(0.01)
+      for _ in range(len(screen[0])):	
+        shiftLeft(1)
+        fillScreen()
+        time.sleep(0.01)
 
-	reset_screen()
-
-def update_clock():
-	reset_screen()
-	add_message(get_time())
-	shiftLeft(61)
-	fillScreen()
-	time.sleep(60)
+      screenLock.release()
 
 reset_screen()
 clear()
@@ -177,9 +177,11 @@ pixels.show()
 color = (255, 0, 102)
 screenLock = threading.Lock()
 
+message_thread = get_messages()
 weather_thread = get_weather()
 time_thread = get_time()
 
+message_thread.start()
 time_thread.start()
 time.sleep(30)
 weather_thread.start()
