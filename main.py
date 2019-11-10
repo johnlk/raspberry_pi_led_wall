@@ -91,8 +91,18 @@ class get_time(threading.Thread):
     threading.Thread.__init__(self)
   def run(self):
     while True:
-      print(datetime.now().strftime('%a %d   %I:%M %p'))
-      time.sleep(5)
+      time_str = datetime.now().strftime('%a %d %I:%M %p')
+
+      screenLock.acquire()
+
+      reset_screen()
+      add_message(time_str)
+      shiftLeft(60)
+      fillScreen()
+
+      screenLock.release()
+
+      time.sleep(60)
 
 def kelvin_to_far(float_val):
   celcius = float_val - 273.15
@@ -111,11 +121,26 @@ class get_weather(threading.Thread):
 
         weather = kelvin_to_far(response['main']['temp']) + " degrees, " + response['weather'][0]['description']
 
-        print(weather)
+        screenLock.acquire()
+
+        reset_screen()
+        add_message(weather)
+        shiftLeft(61)
+        fillScreen()
+
+        time.sleep(3)
+
+        for _ in range(len(screen[0])):
+          shiftLeft(1)
+          fillScreen()
+          time.sleep(0.1)
+
+        screenLock.release()
+
       except Exception as err:
         print("404 weather")
 
-      time.sleep(10)
+      time.sleep(60)
 
 def wait_for_message():
 	result = my_listener.wait_for_message_on('ledWall')
@@ -149,14 +174,15 @@ reset_screen()
 clear()
 pixels.show()
 
-color = (0, 0, 250)
+color = (255, 0, 102)
 screenLock = threading.Lock()
 
 weather_thread = get_weather()
 time_thread = get_time()
 
-weather_thread.start()
 time_thread.start()
+time.sleep(30)
+weather_thread.start()
 
 """
 while True:
