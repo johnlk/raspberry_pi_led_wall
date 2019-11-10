@@ -69,6 +69,10 @@
         return;
       }
 
+      if(text.length > 140){
+        text = text.substring(0, 140);
+      }
+
 			numLoops = Math.max(0, numLoops);
 			numLoops = Math.min(5, numLoops);
 
