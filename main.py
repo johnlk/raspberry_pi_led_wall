@@ -162,11 +162,13 @@ class get_messages(threading.Thread):
 
       passed_color = result.message['color']
       color = (passed_color['r'], passed_color['g'], passed_color['b'])
+      loops = result.message['loops']
 
-      for _ in range(len(screen[0])):	
-        shiftLeft(1)
-        fillScreen()
-        time.sleep(0.01)
+      for _ in range(loops):
+        for _ in range(len(screen[0])):
+          shiftLeft(1)
+          fillScreen()
+          time.sleep(0.01)
 
       screenLock.release()
 

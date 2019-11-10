@@ -7,6 +7,8 @@
     #selectorContainer, #buttonContainer { display: inline; padding: 5px; }
     #messageContainer textarea { width: 300px; height: 150px; font-size: 21px; font-family: verdana, sans-serif; padding: 10px; } 
     #messageContainer { margin-bottom: 10px; }
+    #loopContainer { margin-top: 15px; }
+		#loops { margin-left: 10px; }
     #button { font-size: 14px; font-family: verdana, sans-serif; }
   </style>
   <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.0.js"></script>
@@ -23,7 +25,16 @@
   <div id="selectorContainer">
     <input type="color" id="text_color" name="text_color" value="#0066ff">
   </div>
-  <br>
+	<div id="loopContainer">
+		<span>Number of Loops:</span>
+		<select id="loops">
+			<option value="1">1</option>
+			<option value="2">2</option>
+			<option value="3">3</option>
+			<option value="4">4</option>
+			<option value="5">5</option>
+		</select>
+	</div>
   <p>Write your message: (140 chars max)</p>
   <div id="messageContainer">
     <textarea id="message" maxlength="140" placeholder="john you're so cool"></textarea>
@@ -34,6 +45,7 @@
   </div>
   <script>
     var color = document.getElementById('text_color');
+    var loops = document.getElementById('loops');
     var message = document.getElementById('message');
     var button = document.getElementById('button');
 
@@ -50,15 +62,20 @@
     button.addEventListener('click', function(){
       var selectedColor = color.value;
       var text = message.value;
+			var numLoops = loops.options[loops.selectedIndex].value;
 
       if(text == ''){
         alert('please write a message');
         return;
       }
 
+			numLoops = Math.max(0, numLoops);
+			numLoops = Math.min(5, numLoops);
+
       var payload = {
         color: toRGB(selectedColor),
-        text: text
+        text: text,
+				loops: numLoops
       };
 
       pubnub.publish(
