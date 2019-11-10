@@ -2,6 +2,8 @@ import time
 import board
 import neopixel
 import requests
+import threading
+
 from char_mappings import get_mapping 
 from datetime import datetime
 
@@ -84,29 +86,39 @@ def add_message(message):
 		screen[4] + message_mapping[4]
 	]
 
-def get_time():
-  return datetime.now().strftime('%a-%d %I:%M %p')
+class get_time(threading.Thread):
+  def __init__(self):
+    threading.Thread.__init__(self)
+  def run(self):
+    while True:
+      print(datetime.now().strftime('%a %d   %I:%M %p'))
+      time.sleep(5)
 
 def kelvin_to_far(float_val):
   celcius = float_val - 273.15
   return str(int(celcius * (9/5) + 32))
 
-def get_weather():
-  response = requests.get("api.openweathermap.org/data/2.5/weather?zip=47905,us&" +
-    "appid=5c48857cbe6c1763f27742ae12bd805f")
-  #response = requests.get("https://samples.openweathermap.org/data/2.5/weather?zip=94040,us&appid=b6907d289e10d714a6e88b30761fae22")
-  if response.status_code != 200:
-    return "404 weather"
+class get_weather(threading.Thread):
+  def __init__(self):
+    threading.Thread.__init__(self)
+  def run(self):
+    while True:
+      try:
+        response = requests.get("http://api.openweathermap.org/data/2.5/weather?zip=47905,us" +
+          "&appid=5c48857cbe6c1763f27742ae12bd805f")
 
-  response = response.json()
-  #print(response)
+        response = response.json()
 
-  weather = kelvin_to_far(response['main']['temp']) + "' , " + response['weather'][0]['description']
-  return weather
+        weather = kelvin_to_far(response['main']['temp']) + " degrees, " + response['weather'][0]['description']
+
+        print(weather)
+      except Exception as err:
+        print("404 weather")
+
+      time.sleep(10)
 
 def wait_for_message():
 	result = my_listener.wait_for_message_on('ledWall')
-	#print(result.message)
 
 	clear()
 	pixels.show()
@@ -138,10 +150,18 @@ clear()
 pixels.show()
 
 color = (0, 0, 250)
+screenLock = threading.Lock()
 
+weather_thread = get_weather()
+time_thread = get_time()
+
+weather_thread.start()
+time_thread.start()
+
+"""
 while True:
 	#wait_for_messages()
 	#add_message(get_weather())
 	update_clock()
-
+"""
 
