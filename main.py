@@ -103,7 +103,7 @@ def get_rainbow_color(index):
     r = 0
     g = int(index*3)
     b = int(255 - index*3)
-  return (r, g, b)
+  return (g, r, b)
  
 class get_time(threading.Thread):
   def __init__(self):
@@ -193,15 +193,17 @@ class get_messages(threading.Thread):
 
 def update_clock():
   global color_index, color
+  screenLock.acquire()
+
   time_str = datetime.now().strftime('%a %d %I:%M %p')
   color_index += 1
   color = get_rainbow_color(color_index)
-
-  screenLock.acquire()
   reset_screen()
+
   add_message(time_str)
   shiftLeft(58)
   fillScreen()
+
   screenLock.release()
 
 
