@@ -27,6 +27,7 @@ pubnub.subscribe().channels('ledWall').execute()
 my_listener.wait_for_connect()
 
 screen = []
+color_index = 0
 
 def reset_screen():
 	global screen
@@ -66,7 +67,6 @@ def fillRow(rowIndex):
 		else:
 			pixels[i] = ((0,0,0))
 		
-
 def fillScreen():
 	clear()
 	fillRow(0)
@@ -87,22 +87,30 @@ def add_message(message):
 		screen[4] + message_mapping[4]
 	]
 
+def get_rainbow_color(index):
+  index = index % 256
+  if index < 85:
+    r = int(index * 3)
+    g = int(255 - index*3)
+    b = 0
+  elif index < 170:
+    index -= 85
+    r = int(255 - index*3)
+    g = 0
+    b = int(index*3)
+  else:
+    index -= 170
+    r = 0
+    g = int(index*3)
+    b = int(255 - index*3)
+  return (r, g, b)
+ 
 class get_time(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
   def run(self):
     while True:
-      time_str = datetime.now().strftime('%a %d %I:%M %p')
-
-      screenLock.acquire()
-
-      reset_screen()
-      add_message(time_str)
-      shiftLeft(60)
-      fillScreen()
-
-      screenLock.release()
-
+      update_clock()
       time.sleep(60)
 
 def kelvin_to_far(float_val):
@@ -120,7 +128,10 @@ class get_weather(threading.Thread):
 
         response = response.json()
 
-        weather = kelvin_to_far(response['main']['temp']) + " degrees, " + response['weather'][0]['description']
+        weather = kelvin_to_far(response['main']['temp']) + " degrees, "
+        for forcast in response['weather']:
+          weather += forcast['description'] + ", "
+        weather += "wind " + str(response['wind']['speed']) + " mph"
 
         screenLock.acquire()
 
@@ -128,20 +139,23 @@ class get_weather(threading.Thread):
         add_message(weather)
         shiftLeft(61)
         fillScreen()
+				
+        screenLock.release()
 
         time.sleep(3)
 
-        for _ in range(len(screen[0])):
+        for _ in range(len(screen[0]) - 60):
+          screenLock.acquire()
           shiftLeft(1)
           fillScreen()
+          screenLock.release()
           time.sleep(0.1)
-
-        screenLock.release()
 
       except Exception as err:
         print("404 weather")
 
-      time.sleep(60 * 3) #3 mins
+      update_clock()
+      time.sleep(60 * 5)
 
 class get_messages(threading.Thread):
   def __init__(self):
@@ -154,9 +168,12 @@ class get_messages(threading.Thread):
 
       reset_screen()
       clear()
-      pixels.fill((234, 105, 5))
-      pixels.show()
-      time.sleep(2)
+
+      for i in range(255):
+        for j in range(num_pixels):
+          pixels[j] = get_rainbow_color((j * 256 // num_pixels) + i)
+        pixels.show()
+        time.sleep(0.01)
 
       add_message(result.message['text'])
 
@@ -172,11 +189,27 @@ class get_messages(threading.Thread):
 
       screenLock.release()
 
+      update_clock()
+
+def update_clock():
+  global color_index, color
+  time_str = datetime.now().strftime('%a %d %I:%M %p')
+  color_index += 1
+  color = get_rainbow_color(color_index)
+
+  screenLock.acquire()
+  reset_screen()
+  add_message(time_str)
+  shiftLeft(58)
+  fillScreen()
+  screenLock.release()
+
+
 reset_screen()
 clear()
 pixels.show()
 
-color = (255, 0, 102)
+color = get_rainbow_color(color_index)
 screenLock = threading.Lock()
 
 message_thread = get_messages()
@@ -185,13 +218,5 @@ time_thread = get_time()
 
 message_thread.start()
 time_thread.start()
-time.sleep(30)
 weather_thread.start()
-
-"""
-while True:
-	#wait_for_messages()
-	#add_message(get_weather())
-	update_clock()
-"""
 
