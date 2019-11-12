@@ -38,20 +38,6 @@ def get_clean_screen():
 		'0000000000000000000000000000000000000000000000000000000000000'
 	]
 
-def reset_screen():
-	global screen
-	screen = get_clean_screen()
-
-def shiftLeft(numTimes):
-	global screen
-	screen = [
-		screen[0][numTimes:] + screen[0][:numTimes],
-		screen[1][numTimes:] + screen[1][:numTimes],
-		screen[2][numTimes:] + screen[2][:numTimes],
-		screen[3][numTimes:] + screen[3][:numTimes],
-		screen[4][numTimes:] + screen[4][:numTimes]
-	]
-
 def shiftLeft(numTimes, screen):
 	return [
 		screen[0][numTimes:] + screen[0][:numTimes],
@@ -79,7 +65,7 @@ def fillRow(rowIndex, screen):
 		else:
 			pixels[i] = ((0,0,0))
 		
-def fillScreen(screen=screen):
+def fillScreen(screen):
 	clear()
 	fillRow(0, screen)
 	fillRow(1, screen)
@@ -87,17 +73,6 @@ def fillScreen(screen=screen):
 	fillRow(3, screen)
 	fillRow(4, screen)
 	pixels.show() 
-
-def add_message(message):
-  global screen
-  message_mapping = get_mapping(message)
-  screen = [
-		screen[0] + message_mapping[0],
-		screen[1] + message_mapping[1],
-		screen[2] + message_mapping[2],
-		screen[3] + message_mapping[3],
-		screen[4] + message_mapping[4]
-	]
 
 def add_message(message, screen):
   message_mapping = get_mapping(message)
@@ -154,7 +129,9 @@ class get_weather(threading.Thread):
 
           response = response.json()
 
-          weather = datetime.now().strftime('%A %B %d ')
+          weather = datetime.now().strftime('%A %B %d')
+          weather += "th" #will need to dynamically do this
+          weather += "     "
           weather += kelvin_to_far(response['main']['temp']) + " degrees, "
           for forcast in response['weather']:
             weather += forcast['description'] + ", "
@@ -164,15 +141,15 @@ class get_weather(threading.Thread):
 
           local_screen = add_message(weather, screen=local_screen)
           local_screen = shiftLeft(61, local_screen)
-          fillScreen(screen=local_screen)
+          fillScreen(local_screen)
           
           screenLock.release()
           time.sleep(2)
 
-          for _ in range(len(screen[0]) - 60):
+          for _ in range(len(local_screen[0]) - 60):
             screenLock.acquire()
             local_screen = shiftLeft(1, local_screen)
-            fillScreen(screen=local_screen)
+            fillScreen(local_screen)
             screenLock.release()
             time.sleep(0.1)
 
@@ -189,12 +166,12 @@ class get_messages(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
   def run(self):
-    global color
+    global color, screen
     while True:
       result = my_listener.wait_for_message_on('ledWall')
       screenLock.acquire()
 
-      reset_screen()
+      screen = get_clean_screen()
       clear()
 
       for i in range(255):
@@ -203,7 +180,7 @@ class get_messages(threading.Thread):
         pixels.show()
         time.sleep(0.01)
 
-      add_message(result.message['text'])
+      screen = add_message(result.message['text'], screen)
 
       passed_color = result.message['color']
       color = (passed_color['r'], passed_color['g'], passed_color['b'])
@@ -211,8 +188,8 @@ class get_messages(threading.Thread):
 
       for _ in range(loops):
         for _ in range(len(screen[0])):
-          shiftLeft(1)
-          fillScreen()
+          screen = shiftLeft(1, screen)
+          fillScreen(screen)
           time.sleep(0.01)
 
       screenLock.release()
@@ -220,22 +197,22 @@ class get_messages(threading.Thread):
       update_clock()
 
 def update_clock():
-  global color_index, color
+  global color_index, color, screen
   screenLock.acquire()
 
   time_str = datetime.now().strftime('%I:%M %p')
   color_index += 1
   color = get_rainbow_color(color_index)
-  reset_screen()
+  screen = get_clean_screen()
 
-  add_message(time_str)
-  shiftLeft(50)
-  fillScreen()
+  screen = add_message(time_str, screen)
+  screen = shiftLeft(44, screen)
+  fillScreen(screen)
 
   screenLock.release()
 
 
-reset_screen()
+screen = get_clean_screen()
 clear()
 pixels.show()
 
