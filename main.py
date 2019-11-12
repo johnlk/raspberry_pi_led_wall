@@ -29,15 +29,18 @@ my_listener.wait_for_connect()
 screen = []
 color_index = 0
 
-def reset_screen():
-	global screen
-	screen = [
+def get_clean_screen():
+  return [
 		'0000000000000000000000000000000000000000000000000000000000000',
 		'0000000000000000000000000000000000000000000000000000000000000',
 		'0000000000000000000000000000000000000000000000000000000000000',
 		'0000000000000000000000000000000000000000000000000000000000000',
 		'0000000000000000000000000000000000000000000000000000000000000'
 	]
+
+def reset_screen():
+	global screen
+	screen = get_clean_screen()
 
 def shiftLeft(numTimes):
 	global screen
@@ -49,17 +52,26 @@ def shiftLeft(numTimes):
 		screen[4][numTimes:] + screen[4][:numTimes]
 	]
 
+def shiftLeft(numTimes, screen):
+	return [
+		screen[0][numTimes:] + screen[0][:numTimes],
+		screen[1][numTimes:] + screen[1][:numTimes],
+		screen[2][numTimes:] + screen[2][:numTimes],
+		screen[3][numTimes:] + screen[3][:numTimes],
+		screen[4][numTimes:] + screen[4][:numTimes]
+	]
+
 def clear():
 	pixels.fill((0,0,0))
 
-def fillRow(rowIndex):
+def fillRow(rowIndex, screen):
 	global color
 	startingIndex = 60 * rowIndex
 
 	rowString = screen[rowIndex][:60]
 
 	if rowIndex % 2 == 0:
-		rowString = rowString[::-1] #reverse it
+		rowString = rowString[::-1]
 
 	for i in range(startingIndex, startingIndex+60):
 		if rowString[i % 60] == '1':
@@ -67,17 +79,17 @@ def fillRow(rowIndex):
 		else:
 			pixels[i] = ((0,0,0))
 		
-def fillScreen():
+def fillScreen(screen=screen):
 	clear()
-	fillRow(0)
-	fillRow(1)
-	fillRow(2)
-	fillRow(3)
-	fillRow(4)
+	fillRow(0, screen)
+	fillRow(1, screen)
+	fillRow(2, screen)
+	fillRow(3, screen)
+	fillRow(4, screen)
 	pixels.show() 
 
-def add_message(message):
-  global screen
+def add_message(message, screen=screen):
+  # global screen
   message_mapping = get_mapping(message)
   screen = [
 		screen[0] + message_mapping[0],
@@ -104,6 +116,10 @@ def get_rainbow_color(index):
     g = int(index*3)
     b = int(255 - index*3)
   return (g, r, b)
+
+def kelvin_to_far(float_val):
+  celcius = float_val - 273.15
+  return str(int(celcius * (9/5) + 32))
  
 class get_time(threading.Thread):
   def __init__(self):
@@ -113,46 +129,48 @@ class get_time(threading.Thread):
       update_clock()
       time.sleep(60)
 
-def kelvin_to_far(float_val):
-  celcius = float_val - 273.15
-  return str(int(celcius * (9/5) + 32))
-
 class get_weather(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
   def run(self):
+    info_to_show = 0
     while True:
-      try:
-        response = requests.get("http://api.openweathermap.org/data/2.5/weather?zip=47905,us" +
-          "&appid=5c48857cbe6c1763f27742ae12bd805f")
+      local_screen = get_clean_screen()
 
-        response = response.json()
+      if info_to_show == 0:
+        try:
+          response = requests.get("http://api.openweathermap.org/data/2.5/weather?zip=47905,us" +
+            "&appid=5c48857cbe6c1763f27742ae12bd805f")
 
-        weather = kelvin_to_far(response['main']['temp']) + " degrees, "
-        for forcast in response['weather']:
-          weather += forcast['description'] + ", "
-        weather += "wind " + str(response['wind']['speed']) + " mph"
+          response = response.json()
 
-        screenLock.acquire()
+          weather = datetime.now().strftime('%A %B %d ')
+          weather += kelvin_to_far(response['main']['temp']) + " degrees, "
+          for forcast in response['weather']:
+            weather += forcast['description'] + ", "
+          weather += "wind " + str(response['wind']['speed']) + " mph"
 
-        reset_screen()
-        add_message(weather)
-        shiftLeft(61)
-        fillScreen()
-				
-        screenLock.release()
-
-        time.sleep(3)
-
-        for _ in range(len(screen[0]) - 60):
           screenLock.acquire()
-          shiftLeft(1)
-          fillScreen()
-          screenLock.release()
-          time.sleep(0.1)
 
-      except Exception as err:
-        print("404 weather")
+          add_message(weather, screen=local_screen)
+          local_screen = shiftLeft(61, local_screen)
+          fillScreen(screen=local_screen)
+          
+          screenLock.release()
+          time.sleep(2)
+
+          for _ in range(len(screen[0]) - 60):
+            screenLock.acquire()
+            local_screen = shiftLeft(1, local_screen)
+            fillScreen(screen=local_screen)
+            screenLock.release()
+            time.sleep(0.1)
+
+        except Exception as err:
+          print("404 weather")
+      #else:
+      # might throw in some stock tickers
+      # idk
 
       update_clock()
       time.sleep(60 * 5)
@@ -195,13 +213,13 @@ def update_clock():
   global color_index, color
   screenLock.acquire()
 
-  time_str = datetime.now().strftime('%a %d %I:%M %p')
+  time_str = datetime.now().strftime('%I:%M %p')
   color_index += 1
   color = get_rainbow_color(color_index)
   reset_screen()
 
   add_message(time_str)
-  shiftLeft(58)
+  shiftLeft(50)
   fillScreen()
 
   screenLock.release()
