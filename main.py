@@ -88,10 +88,20 @@ def fillScreen(screen=screen):
 	fillRow(4, screen)
 	pixels.show() 
 
-def add_message(message, screen=screen):
-  # global screen
+def add_message(message):
+  global screen
   message_mapping = get_mapping(message)
   screen = [
+		screen[0] + message_mapping[0],
+		screen[1] + message_mapping[1],
+		screen[2] + message_mapping[2],
+		screen[3] + message_mapping[3],
+		screen[4] + message_mapping[4]
+	]
+
+def add_message(message, screen):
+  message_mapping = get_mapping(message)
+  return [
 		screen[0] + message_mapping[0],
 		screen[1] + message_mapping[1],
 		screen[2] + message_mapping[2],
@@ -152,7 +162,7 @@ class get_weather(threading.Thread):
 
           screenLock.acquire()
 
-          add_message(weather, screen=local_screen)
+          local_screen = add_message(weather, screen=local_screen)
           local_screen = shiftLeft(61, local_screen)
           fillScreen(screen=local_screen)
           
