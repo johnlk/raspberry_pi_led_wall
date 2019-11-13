@@ -6,6 +6,7 @@ import threading
 
 from char_mappings import get_mapping 
 from datetime import datetime
+from key import get_pubnub_obj, get_weather_key
 
 from pubnub.enums import PNStatusCategory
 from pubnub.pnconfiguration import PNConfiguration
@@ -16,10 +17,7 @@ num_pixels = 60 * 5
 ORDER = neopixel.GRB
 pixels = neopixel.NeoPixel(pixel_pin, num_pixels, brightness=0.05, auto_write=False, pixel_order=ORDER)
 
-pnconfig = PNConfiguration()
-pnconfig.subscribe_key = 'sub-c-41e1caba-e89a-11e6-81cc-0619f8945a4f'
-pubnub = PubNub(pnconfig)
-
+pubnub = get_pubnub_obj()
 my_listener = SubscribeListener()
 pubnub.add_listener(my_listener)
 
@@ -126,9 +124,7 @@ class get_scrolling_info(threading.Thread):
         message += "th" #will need to dynamically do this
       elif info_to_show == 5:
         try:
-          response = requests.get("http://api.openweathermap.org/data/2.5/weather?zip=47905,us" +
-            "&appid=5c48857cbe6c1763f27742ae12bd805f")
-
+          response = requests.get("http://api.openweathermap.org/data/2.5/weather?zip=47905,us&appid=" + get_weather_key())
           response = response.json()
 
           message = "weather: " + kelvin_to_far(response['main']['temp']) + " degrees, "
@@ -227,5 +223,5 @@ time_thread = get_time()
 
 message_thread.start()
 scrolling_thread.start()
-weather_thread.start()
+time_thread.start()
 
