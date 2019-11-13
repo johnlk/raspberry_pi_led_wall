@@ -26,7 +26,6 @@ pubnub.add_listener(my_listener)
 pubnub.subscribe().channels('ledWall').execute()
 my_listener.wait_for_connect()
 
-screen = []
 color_index = 0
 
 def get_clean_screen():
@@ -114,59 +113,63 @@ class get_time(threading.Thread):
       update_clock()
       time.sleep(60)
 
-class get_weather(threading.Thread):
+class get_scrolling_info(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
   def run(self):
     info_to_show = 0
     while True:
-      local_screen = get_clean_screen()
-
-      if info_to_show == 0:
+      screen = get_clean_screen()
+      message = ""
+      if info_to_show < 5:
+        message = datetime.now().strftime('%A %B %d')
+        message += "th" #will need to dynamically do this
+      elif info_to_show == 5:
         try:
           response = requests.get("http://api.openweathermap.org/data/2.5/weather?zip=47905,us" +
             "&appid=5c48857cbe6c1763f27742ae12bd805f")
 
           response = response.json()
 
-          weather = datetime.now().strftime('%A %B %d')
-          weather += "th" #will need to dynamically do this
-          weather += "     "
-          weather += kelvin_to_far(response['main']['temp']) + " degrees, "
+          message = "weather: " + kelvin_to_far(response['main']['temp']) + " degrees, "
           for forcast in response['weather']:
-            weather += forcast['description'] + ", "
-          weather += "wind " + str(response['wind']['speed']) + " mph"
-
-          screenLock.acquire()
-
-          local_screen = add_message(weather, screen=local_screen)
-          local_screen = shiftLeft(61, local_screen)
-          fillScreen(local_screen)
+            message += forcast['description'] + ", "
+          message += "wind " + str(response['wind']['speed']) + " mph"
           
-          screenLock.release()
-          time.sleep(2)
-
-          for _ in range(len(local_screen[0]) - 60):
-            screenLock.acquire()
-            local_screen = shiftLeft(1, local_screen)
-            fillScreen(local_screen)
-            screenLock.release()
-            time.sleep(0.1)
-
         except Exception as err:
           print("404 weather")
       #else:
       # might throw in some stock tickers
       # idk
 
+      screenLock.acquire()
+
+      screen = add_message(message, screen)
+      screen = shiftLeft(61, screen)
+      fillScreen(screen)
+
+      screenLock.release()
+      time.sleep(2)
+
+      for _ in range(len(screen[0]) - 60):
+        screenLock.acquire()
+        screen = shiftLeft(1, screen)
+        fillScreen(screen)
+        screenLock.release()
+        time.sleep(0.05)
+
+      info_to_show += 1
+      if info_to_show == 6:
+        info_to_show = 0
+
       update_clock()
-      time.sleep(60 * 5)
+      time.sleep(60)
 
 class get_messages(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
   def run(self):
-    global color, screen
+    global color
     while True:
       result = my_listener.wait_for_message_on('ledWall')
       screenLock.acquire()
@@ -197,7 +200,7 @@ class get_messages(threading.Thread):
       update_clock()
 
 def update_clock():
-  global color_index, color, screen
+  global color_index, color
   screenLock.acquire()
 
   time_str = datetime.now().strftime('%I:%M %p')
@@ -212,7 +215,6 @@ def update_clock():
   screenLock.release()
 
 
-screen = get_clean_screen()
 clear()
 pixels.show()
 
@@ -220,10 +222,10 @@ color = get_rainbow_color(color_index)
 screenLock = threading.Lock()
 
 message_thread = get_messages()
-weather_thread = get_weather()
+scrolling_thread = get_scrolling_info()
 time_thread = get_time()
 
 message_thread.start()
-time_thread.start()
+scrolling_thread.start()
 weather_thread.start()
 
