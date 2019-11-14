@@ -12,7 +12,13 @@
     #button { font-size: 14px; font-family: verdana, sans-serif; }
   </style>
   <script src="https://cdn.pubnub.com/sdk/javascript/pubnub.4.27.0.js"></script>
-	<script src="./pubnub_key.js"></script>
+  <script>
+    var pubnub = new PubNub({
+      subscribeKey: "sub-c-de705eca-062c-11ea-a4a2-b207d7d0b791",
+      publishKey: "pub-c-3f930b3d-1837-4750-a616-4389f5531b12",
+      ssl: true
+    });
+  </script>
 </head>
 <body>
   <span>Select a text color:</span>
