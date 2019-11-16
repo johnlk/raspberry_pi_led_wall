@@ -102,14 +102,6 @@ def get_rainbow_color(index):
 def kelvin_to_far(float_val):
   celcius = float_val - 273.15
   return str(int(celcius * (9/5) + 32))
- 
-class get_time(threading.Thread):
-  def __init__(self):
-    threading.Thread.__init__(self)
-  def run(self):
-    while True:
-      update_clock()
-      time.sleep(60)
 
 class get_scrolling_info(threading.Thread):
   def __init__(self):
@@ -119,10 +111,10 @@ class get_scrolling_info(threading.Thread):
     while True:
       screen = get_clean_screen()
       message = ""
-      if info_to_show < 5:
+      if info_to_show % 2 == 0:
         message = datetime.now().strftime('%A %B %d')
         message += "th" #will need to dynamically do this
-      elif info_to_show == 5:
+      elif info_to_show == 1:
         try:
           response = requests.get("http://api.openweathermap.org/data/2.5/weather?zip=47905,us&appid=" + get_weather_key())
           response = response.json()
@@ -133,10 +125,38 @@ class get_scrolling_info(threading.Thread):
           message += "wind " + str(response['wind']['speed']) + " mph"
           
         except Exception as err:
+          print(err)
           print("404 weather")
-      #else:
-      # might throw in some stock tickers
-      # idk
+      elif info_to_show == 3:
+        try:
+          response = requests.get("https://api.chucknorris.io/jokes/random")
+          response = response.json()
+
+          message = "Chuck norris joke: " + response['value']
+        except Exception as err:
+          print(err)
+          print("bad chuck norris")
+      elif info_to_show == 5:
+        try:
+          response = requests.get("https://uselessfacts.jsph.pl//random.json?language=en")
+          response = response.json()
+
+          message = "useless fact: " + response['text']
+        except Exception as err:
+          print(err)
+          print("404 useless fact")
+      elif info_to_show == 7:
+        try:
+          response = requests.get("https://opentdb.com/api.php?amount=1&difficulty=easy&type=multiple")
+          response = response.json()
+          response = response['results'][0]
+
+          message = "trivia question: " + response['question']
+          message += "                              "
+          message += response['correct_answer']
+        except Exception as err:
+          print(err)
+          print("404 trivia api")
 
       screenLock.acquire()
 
@@ -152,10 +172,10 @@ class get_scrolling_info(threading.Thread):
         screen = shiftLeft(1, screen)
         fillScreen(screen)
         screenLock.release()
-        time.sleep(0.05)
+        time.sleep(0.02)
 
       info_to_show += 1
-      if info_to_show == 6:
+      if info_to_show == 8:
         info_to_show = 0
 
       update_clock()
@@ -219,9 +239,7 @@ screenLock = threading.Lock()
 
 message_thread = get_messages()
 scrolling_thread = get_scrolling_info()
-time_thread = get_time()
 
 message_thread.start()
 scrolling_thread.start()
-time_thread.start()
 
