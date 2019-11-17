@@ -165,14 +165,13 @@ class get_scrolling_info(threading.Thread):
       fillScreen(screen)
 
       screenLock.release()
-      time.sleep(2)
+      time.sleep(5)
 
       for _ in range(len(screen[0]) - 60):
         screenLock.acquire()
         screen = shiftLeft(1, screen)
         fillScreen(screen)
         screenLock.release()
-        time.sleep(0.02)
 
       info_to_show += 1
       if info_to_show == 8:
@@ -197,7 +196,6 @@ class get_messages(threading.Thread):
         for j in range(num_pixels):
           pixels[j] = get_rainbow_color((j * 256 // num_pixels) + i)
         pixels.show()
-        time.sleep(0.01)
 
       screen = add_message(result.message['text'], screen)
 
@@ -209,7 +207,6 @@ class get_messages(threading.Thread):
         for _ in range(len(screen[0])):
           screen = shiftLeft(1, screen)
           fillScreen(screen)
-          time.sleep(0.01)
 
       screenLock.release()
 

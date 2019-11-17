@@ -367,6 +367,8 @@ def get_mapping(string):
 
   mapping = ['','','','','']
 
+  string = string.upper()
+
   for char in string:
     if char in chars:
       char_mapping = chars[char]
