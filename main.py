@@ -1,14 +1,14 @@
 import time
 import board
 import neopixel
-import requests
 import threading
 
+from helpers import get_rainbow_color
+from apis import get_weather, get_chuck_norris_joke, get_useless_fact, get_trivia
 from char_mappings import get_mapping 
 from datetime import datetime
-from key import get_pubnub_obj, get_weather_key
+from key import get_pubnub_obj
 
-from pubnub.enums import PNStatusCategory
 from pubnub.pnconfiguration import PNConfiguration
 from pubnub.pubnub import PubNub, SubscribeListener
 
@@ -81,28 +81,6 @@ def add_message(message, screen):
 		screen[4] + message_mapping[4]
 	]
 
-def get_rainbow_color(index):
-  index = index % 256
-  if index < 85:
-    r = int(index * 3)
-    g = int(255 - index*3)
-    b = 0
-  elif index < 170:
-    index -= 85
-    r = int(255 - index*3)
-    g = 0
-    b = int(index*3)
-  else:
-    index -= 170
-    r = 0
-    g = int(index*3)
-    b = int(255 - index*3)
-  return (g, r, b)
-
-def kelvin_to_far(float_val):
-  celcius = float_val - 273.15
-  return str(int(celcius * (9/5) + 32))
-
 class get_scrolling_info(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
@@ -111,52 +89,18 @@ class get_scrolling_info(threading.Thread):
     while True:
       screen = get_clean_screen()
       message = ""
-      if info_to_show % 2 == 0:
+
+      if info_to_show % 5 != 0:
         message = datetime.now().strftime('%A %B %d')
-        message += "th" #will need to dynamically do this
-      elif info_to_show == 1:
-        try:
-          response = requests.get("http://api.openweathermap.org/data/2.5/weather?zip=47905,us&appid=" + get_weather_key())
-          response = response.json()
-
-          message = "weather: " + kelvin_to_far(response['main']['temp']) + " degrees, "
-          for forcast in response['weather']:
-            message += forcast['description'] + ", "
-          message += "wind " + str(response['wind']['speed']) + " mph"
-          
-        except Exception as err:
-          print(err)
-          print("404 weather")
-      elif info_to_show == 3:
-        try:
-          response = requests.get("https://api.chucknorris.io/jokes/random")
-          response = response.json()
-
-          message = "Chuck norris joke: " + response['value']
-        except Exception as err:
-          print(err)
-          print("bad chuck norris")
+        message += get_date_suffix(int(message.split(' ')[2]))
       elif info_to_show == 5:
-        try:
-          response = requests.get("https://uselessfacts.jsph.pl//random.json?language=en")
-          response = response.json()
-
-          message = "useless fact: " + response['text']
-        except Exception as err:
-          print(err)
-          print("404 useless fact")
-      elif info_to_show == 7:
-        try:
-          response = requests.get("https://opentdb.com/api.php?amount=1&difficulty=easy&type=multiple")
-          response = response.json()
-          response = response['results'][0]
-
-          message = "trivia question: " + response['question']
-          message += "                              "
-          message += response['correct_answer']
-        except Exception as err:
-          print(err)
-          print("404 trivia api")
+        message = get_weather()
+      elif info_to_show == 10:
+        message = get_chuck_norris_joke()
+      elif info_to_show == 15:
+        message = get_useless_fact()
+      elif info_to_show == 20:
+        message = get_trivia()
 
       screenLock.acquire()
 
@@ -174,7 +118,7 @@ class get_scrolling_info(threading.Thread):
         screenLock.release()
 
       info_to_show += 1
-      if info_to_show == 8:
+      if info_to_show == 21:
         info_to_show = 0
 
       update_clock()
@@ -227,16 +171,15 @@ def update_clock():
 
   screenLock.release()
 
+if __name__ == '__main__':
+  clear()
+  pixels.show()
 
-clear()
-pixels.show()
+  color = get_rainbow_color(color_index)
+  screenLock = threading.Lock()
 
-color = get_rainbow_color(color_index)
-screenLock = threading.Lock()
+  message_thread = get_messages()
+  scrolling_thread = get_scrolling_info()
 
-message_thread = get_messages()
-scrolling_thread = get_scrolling_info()
-
-message_thread.start()
-scrolling_thread.start()
-
+  message_thread.start()
+  scrolling_thread.start()
