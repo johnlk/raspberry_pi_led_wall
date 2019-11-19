@@ -3,7 +3,7 @@ import board
 import neopixel
 import threading
 
-from helpers import get_rainbow_color
+from helpers import get_rainbow_color, get_date_suffix
 from apis import get_weather, get_chuck_norris_joke, get_useless_fact, get_trivia
 from char_mappings import get_mapping 
 from datetime import datetime
@@ -85,7 +85,7 @@ class get_scrolling_info(threading.Thread):
   def __init__(self):
     threading.Thread.__init__(self)
   def run(self):
-    info_to_show = 0
+    info_to_show = 1
     while True:
       screen = get_clean_screen()
       message = ""
@@ -119,7 +119,7 @@ class get_scrolling_info(threading.Thread):
 
       info_to_show += 1
       if info_to_show == 21:
-        info_to_show = 0
+        info_to_show = 1
 
       update_clock()
       time.sleep(60)
