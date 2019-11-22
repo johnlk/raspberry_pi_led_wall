@@ -22,9 +22,9 @@ def kelvin_to_far(float_val):
 
 def get_date_suffix(day_of_month):
   if day_of_month == 1 or day_of_month == 21 or day_of_month == 31:
-    "st"
+    return "st"
   elif day_of_month == 2 or day_of_month == 22:
-    "nd"
+    return "nd"
   elif day_of_month == 3 or day_of_month == 23:
     return "rd"
   return "th"

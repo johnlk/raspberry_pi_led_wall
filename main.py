@@ -37,11 +37,11 @@ def get_clean_screen():
 
 def shiftLeft(numTimes, screen):
 	return [
-		screen[0][numTimes:] + screen[0][:numTimes],
-		screen[1][numTimes:] + screen[1][:numTimes],
-		screen[2][numTimes:] + screen[2][:numTimes],
-		screen[3][numTimes:] + screen[3][:numTimes],
-		screen[4][numTimes:] + screen[4][:numTimes]
+		screen[0][numTimes:],
+		screen[1][numTimes:],
+		screen[2][numTimes:],
+		screen[3][numTimes:],
+		screen[4][numTimes:]
 	]
 
 def clear():
@@ -52,6 +52,9 @@ def fillRow(rowIndex, screen):
 	startingIndex = 60 * rowIndex
 
 	rowString = screen[rowIndex][:60]
+
+	if len(rowString) < 60:
+		rowString += '0000000000000000000000000000000000000000000000000000000000000'[:(60 - len(rowString))]
 
 	if rowIndex % 2 == 0:
 		rowString = rowString[::-1]
@@ -111,7 +114,7 @@ class get_scrolling_info(threading.Thread):
       screenLock.release()
       time.sleep(5)
 
-      for _ in range(len(screen[0]) - 60):
+      while len(screen[0]) > 0:
         screenLock.acquire()
         screen = shiftLeft(1, screen)
         fillScreen(screen)
@@ -133,7 +136,6 @@ class get_messages(threading.Thread):
       result = my_listener.wait_for_message_on('ledWall')
       screenLock.acquire()
 
-      screen = get_clean_screen()
       clear()
 
       for i in range(255):
@@ -141,14 +143,15 @@ class get_messages(threading.Thread):
           pixels[j] = get_rainbow_color((j * 256 // num_pixels) + i)
         pixels.show()
 
-      screen = add_message(result.message['text'], screen)
-
+      message = result.message['text']
       passed_color = result.message['color']
       color = (passed_color['r'], passed_color['g'], passed_color['b'])
       loops = result.message['loops']
 
       for _ in range(loops):
-        for _ in range(len(screen[0])):
+        screen = get_clean_screen()
+        screen = add_message(message, screen)
+        while len(screen[0]) > 0:
           screen = shiftLeft(1, screen)
           fillScreen(screen)
 
@@ -176,6 +179,7 @@ if __name__ == '__main__':
   pixels.show()
 
   color = get_rainbow_color(color_index)
+
   screenLock = threading.Lock()
 
   message_thread = get_messages()
